@@ -1,13 +1,92 @@
+import 'package:artpartner001/screens/artSearch.dart';
 import 'package:flutter/material.dart';
 import '../constants/api_constants.dart';
 import '../models/clevelandArtwork.dart';
 import '../models/semaArtwork.dart';
-import '../widgets/appbar.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'dart:math';
-import 'artworkDescription.dart';
+import '../utils/artworkDisplay.dart';
+
+
+class ArtGalleryAppBar extends StatelessWidget implements PreferredSizeWidget{
+  const ArtGalleryAppBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      title: Column(
+        children: [
+          Image.asset('assets/images/logo.png', height: 55,),
+          SizedBox(height: 5)
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.search, size: 35),
+          onPressed: (){
+            Navigator.push(context, MaterialPageRoute(builder: (context) => ArtSearch()));
+          },
+        )
+      ],
+      scrolledUnderElevation: 0,
+    );
+  }
+
+  @override
+  Size get preferredSize => Size.fromHeight(60.0);
+}
+
+class CustomChoiceChips extends StatelessWidget {
+  CustomChoiceChips({required this.keywords, required this.selectedIndex, required this.onSelected,});
+  final List<String> keywords;
+  final int? selectedIndex;
+  final Function(int, bool) onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 5.0,
+      children: List.generate(keywords.length, (index) {
+        return ChoiceChip(
+          label: Text(keywords[index]),
+          backgroundColor: Color(0xffF0DFC8),
+          selectedColor: Color(0xFFC6BFA6),
+          selected: selectedIndex == index,
+          onSelected: (selected) => onSelected(index, selected),
+        );
+      }),
+    );
+  }
+}
+
+class CustomDivider extends StatelessWidget {
+  const CustomDivider({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(
+      color: Colors.black,
+      height: 3,
+    );
+  }
+}
+
+class MessageText extends StatelessWidget {
+  const MessageText({super.key, required this.text,});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(height: 5),
+        Text(text,)
+      ],
+    );
+  }
+}
 
 class ArtGallery extends StatefulWidget {
   const ArtGallery({super.key});
@@ -92,225 +171,117 @@ class _ArtGalleryState extends State<ArtGallery> {
     }
   }
 
+  void onArtGallerySelected(int index, bool selected) {
+    setState(() {
+      if (selected) {
+        selectedArtGalleryIndex = index;
+        if (index == 0) {
+          showSemaKeyword = true;
+          showClevelandKeyword = false;
+          showClevelandArtwork = false;
+          selectedClevelandKeywordIndex = null;
+        } else if (index == 1) {
+          showClevelandKeyword = true;
+          showSemaKeyword = false;
+          showSemaArtwork = false;
+          selectedSemaKeywordIndex = null;
+        }
+      } else {
+        selectedArtGalleryIndex = null;
+        selectedSemaKeywordIndex = null;
+        selectedClevelandKeywordIndex = null;
+        showSemaKeyword = false;
+        showClevelandKeyword = false;
+        showSemaArtwork = false;
+        showClevelandArtwork = false;
+      }
+    });
+  }
+
+  void onSemaKeywordSelected(int index, bool selected) {
+    setState(() {
+      if (selected) {
+        selectedSemaKeywordIndex = index;
+        futureSemaArtwork = fetchSemaArtwork();
+        showSemaArtwork = true;
+      } else {
+        selectedSemaKeywordIndex = null;
+        showSemaArtwork = false;
+      }
+    });
+  }
+
+  void onClevelandKeywordSelected(int index, bool selected) {
+    setState(() {
+      if (selected) {
+        selectedClevelandKeywordIndex = index;
+        futureClevelandArtwork = fetchClevelandArtwork();
+        showClevelandArtwork = true;
+      } else {
+        selectedClevelandKeywordIndex = null;
+        showClevelandArtwork = false;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:BaseAppBar(),
+      appBar:ArtGalleryAppBar(),
       body: Container(
         margin: EdgeInsets.fromLTRB(10, 10, 10, 0),
         child: Column(
           children: [
-            Wrap(
-                spacing: 5.0,
-                children: List.generate(artGalleriesList.length,(index){
-                  return ChoiceChip(
-                    label: Text(artGalleriesList[index]),
-                    backgroundColor: Color(0xffF0DFC8),
-                    selectedColor: Color(0xFFC6BFA6),
-                    selected: selectedArtGalleryIndex == index,
-                    onSelected: (selected){
-                      setState(() {
-                        if(selected) {
-                          selectedArtGalleryIndex = index;
-                          if(selectedArtGalleryIndex == 0){
-                            showSemaKeyword = true;
-                            showClevelandKeyword = false;
-                            showClevelandArtwork = false;
-                            selectedClevelandKeywordIndex = null;
-                          }else if(selectedArtGalleryIndex == 1){
-                            showClevelandKeyword = true;
-                            showSemaKeyword = false;
-                            showSemaArtwork = false;
-                            selectedSemaKeywordIndex = null;
-                          }
-                        }else{
-                          selectedArtGalleryIndex = null;
-                          selectedSemaKeywordIndex = null;
-                          selectedClevelandKeywordIndex = null;
-                          showSemaKeyword=false;
-                          showClevelandKeyword=false;
-                          showSemaArtwork=false;
-                          showClevelandArtwork=false;
-                        }
-                      });
-                    },
-                  );
-                })
+            CustomChoiceChips(
+              keywords: artGalleriesList,
+              selectedIndex: selectedArtGalleryIndex,
+              onSelected: onArtGallerySelected,
             ),
+            CustomDivider(),
 
-            Divider(color: Colors.black, height: 3,),
+            if(showSemaKeyword)
+              CustomChoiceChips(
+                keywords: semaKeywordsList,
+                selectedIndex: selectedSemaKeywordIndex,
+                onSelected: onSemaKeywordSelected,
+              ),
+            if(showClevelandKeyword)
+              CustomChoiceChips(
+                keywords: clevelandKeywordsList,
+                selectedIndex: selectedClevelandKeywordIndex,
+                onSelected: onClevelandKeywordSelected,
+              ),
+            if(selectedArtGalleryIndex != null)
+              CustomDivider(),
+            if(!showSemaKeyword && !showClevelandKeyword)
+              MessageText(text: '미술관을 선택해주세요.'),
 
-            showSemaKeyword ? Wrap(
-                spacing: 5.0,
-                children: List.generate(semaKeywordsList.length,(index){
-                  return ChoiceChip(
-                    label: Text(semaKeywordsList[index]),
-                    backgroundColor: Color(0xffF0DFC8),
-                    selectedColor: Color(0xFFC6BFA6),
-                    selected: selectedSemaKeywordIndex == index,
-                    onSelected: (selected){
-                      setState(() {
-                        if(selected) {
-                          selectedSemaKeywordIndex = index;
-                          futureSemaArtwork=fetchSemaArtwork();
-                          showSemaArtwork=true;
-                        }else{
-                          selectedSemaKeywordIndex = null;
-                          showSemaArtwork=false;
-                        }
-                      });
-                    },
-                  );
-                })
-            ) : Container(),
-
-            showClevelandKeyword ? Wrap(
-                spacing: 5.0,
-                children: List.generate(clevelandKeywordsList.length,(index){
-                  return ChoiceChip(
-                    label: Text(clevelandKeywordsList[index]),
-                    backgroundColor: Color(0xffF0DFC8),
-                    selectedColor: Color(0xFFC6BFA6),
-                    selected: selectedClevelandKeywordIndex == index,
-                    onSelected: (selected){
-                      setState(() {
-                        if(selected) {
-                          selectedClevelandKeywordIndex = index;
-                          futureClevelandArtwork=fetchClevelandArtwork();
-                          showClevelandArtwork=true;
-                        }else{
-                          selectedClevelandKeywordIndex = null;
-                          showClevelandArtwork=false;
-                        }
-                      });
-                    },
-                  );
-                })
-            ) : Container(),
-
-            selectedArtGalleryIndex != null ? Divider(color: Colors.black, height: 3,) : Container(),
-
-            showSemaArtwork ? Expanded(
-                child: FutureBuilder<List<SemaArtwork>>(
-                  future: futureSemaArtwork,
-                  builder: (context, snapshot){
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator(),);
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else if (!snapshot.hasData) {
-                      return Text('No data');
-                    } else {
-                      return NotificationListener<ScrollNotification>(
-                        onNotification: (notification) {
-                          if (notification is ScrollEndNotification) {
-                            final currentScrollOffset = notification.metrics.pixels;
-                            final scrollSpeed = (currentScrollOffset - lastScrollOffset).abs();
-                            if (notification.metrics.extentAfter == 0) {
-                              if (scrollSpeed < 50) {
-                                setState(() {
-                                  futureSemaArtwork = fetchSemaArtwork();
-                                });
-                              }
-                            }
-                            lastScrollOffset = currentScrollOffset;
-                          }
-                          return true;
-                        },
-                        child: MasonryGridView.count(
-                          padding: EdgeInsets.all(10),
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) {
-                            final imageUrl = snapshot.data![index].mainImage;
-                            return GestureDetector(
-                                onTap: (){
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => SemaArtworkDescription(semaArtwork: snapshot.data![index],)));
-                                },
-                                child: Image.network(
-                                  imageUrl!,
-                                  errorBuilder: (context, error, stackTrace){
-                                    return Container();
-                                  },
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if(loadingProgress == null ) return child;
-                                    return Container(height: 150,);
-                                  },
-                                )
-                            );
-                          },
-                        ),
-                      );
-                    }
-                  },
-                )
-            ) : Container(),
-
-            showClevelandArtwork ? Expanded(
-                child: FutureBuilder<List<ClevelandArtwork>>(
-                  future: futureClevelandArtwork,
-                  builder: (context, snapshot){
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator(),);
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else if (!snapshot.hasData) {
-                      return Text('No data');
-                    } else {
-                      return NotificationListener<ScrollNotification>(
-                        onNotification: (notification) {
-                          if (notification is ScrollEndNotification) {
-                            final currentScrollOffset = notification.metrics.pixels;
-                            final scrollSpeed = (currentScrollOffset - lastScrollOffset).abs();
-                            if (notification.metrics.extentAfter == 0) {
-                              if (scrollSpeed < 50) {
-                                setState(() {
-                                  futureClevelandArtwork = fetchClevelandArtwork();
-                                });
-                              }
-                            }
-                            lastScrollOffset = currentScrollOffset;
-                          }
-                          return true;
-                        },
-                        child: MasonryGridView.count(
-                          padding: EdgeInsets.all(10),
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) {
-                            Widget? ImageWidget;
-                            if(snapshot.data![index].images == null) ImageWidget=Container();
-                            else if(snapshot.data![index].images!.web == null) ImageWidget=Container();
-                            else if(snapshot.data![index].images!.web!.url == null) ImageWidget=Container();
-                            else ImageWidget = Image.network(
-                                snapshot.data![index].images!.web!.url!,
-                                errorBuilder: (context, error, stackTrace){
-                                  return Container();
-                                },
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if(loadingProgress == null) return child;
-                                  return Container(
-                                    height: 150,
-                                  );
-                                },
-                              );
-                            return GestureDetector(
-                              onTap: (){
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => ClevelandArtworkDescription(clevelandArtwork: snapshot.data![index],)));
-                              },
-                              child: ImageWidget,
-                            );
-                          },
-                        ),
-                      );
-                    }
-                  },
-                )
-            ) : Container(),
+            if(showSemaArtwork)
+              ArtworkGridView<SemaArtwork>(
+                futureArtwork: futureSemaArtwork,
+                fetchMoreArtwork: () {
+                  setState(() {
+                    futureSemaArtwork = fetchSemaArtwork();
+                  });
+                },
+                lastScrollOffset: lastScrollOffset,
+                imageUrlExtractor: (artwork) => artwork.mainImage ?? '',
+                showLoadMore: true,
+              ),
+            if(showClevelandArtwork)
+              ArtworkGridView<ClevelandArtwork>(
+                futureArtwork: futureClevelandArtwork,
+                fetchMoreArtwork: () {
+                  setState(() {
+                    futureClevelandArtwork = fetchClevelandArtwork();
+                  });
+                },
+                lastScrollOffset: lastScrollOffset,
+                imageUrlExtractor: (artwork) => artwork.images?.web?.url ?? '',
+                showLoadMore: true,
+              ),
+            if((showSemaKeyword || showClevelandKeyword) && !showSemaArtwork && !showClevelandArtwork)
+              MessageText(text: '키워드를 선택해주세요.'),
           ],
         ),
       ),

@@ -92,10 +92,10 @@ class _AnalyzeHistoryEditState extends State<AnalyzeHistoryEdit> {
 
   void saveAnalyzeText() async{
     analyzeBox.put(
-      widget.boxKey, {
-        'image': imageBytes,
-        'text': _controller.text
-      }
+        widget.boxKey, {
+      'image': imageBytes,
+      'text': _controller.text
+    }
     );
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -133,6 +133,7 @@ class _ImproveHistoryEditState extends State<ImproveHistoryEdit> {
   late Uint8List imageBytes;
   late List<YouTubeVideo> videos;
   late TextEditingController _controller;
+  late String keyword;
 
   @override
   void initState() {
@@ -140,16 +141,18 @@ class _ImproveHistoryEditState extends State<ImproveHistoryEdit> {
     super.initState();
     imageBytes = improveBox.get(widget.boxKey)['image'];
     _controller = TextEditingController(text: improveBox.get(widget.boxKey)['text']);
-    videos = (improveBox.getAt(0)['youtube'] as List).cast<YouTubeVideo>();
+    videos = (improveBox.get(widget.boxKey)['youtube'] as List).cast<YouTubeVideo>();
+    keyword = improveBox.get(widget.boxKey)['keyword'];
   }
 
   void saveImproveText() async{
     improveBox.put(
-      widget.boxKey, {
-        'image': imageBytes,
-        'text': _controller.text,
-        'youtube': videos,
-      }
+        widget.boxKey, {
+      'image': imageBytes,
+      'text': _controller.text,
+      'youtube': videos,
+      'keyword': keyword
+    }
     );
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -166,7 +169,7 @@ class _ImproveHistoryEditState extends State<ImproveHistoryEdit> {
           children: [
             ImageDisplay(imageBytes: imageBytes),
             TextEditField(controller: _controller),
-            YoutubeVideosDisplay(videos: videos),
+            YoutubeVideosDisplay(videos: videos, keyword: improveBox.get(widget.boxKey)['keyword'],),
             SizedBox(height: 40,)
           ],
         ),

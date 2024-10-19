@@ -128,7 +128,7 @@ class _ImproveHistoryState extends State<ImproveHistory> {
               )
             ],
           ),
-      )
+        )
     );
   }
 }

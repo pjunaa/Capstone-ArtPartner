@@ -22,14 +22,15 @@ void _launchURL(String url) async {
 }
 
 class YoutubeVideosDisplay extends StatelessWidget {
-  const YoutubeVideosDisplay({super.key, required this.videos});
+  const YoutubeVideosDisplay({super.key, required this.videos, required this.keyword});
   final List<YouTubeVideo> videos;
+  final String keyword;
 
   @override
   Widget build(BuildContext context) {
     return ExpansionTile(
         title: Text(
-          '관련 YouTube 동영상',
+          '$keyword 관련 YouTube 동영상',
           style: TextStyle(
             fontSize: 18,
             color: Colors.black87,

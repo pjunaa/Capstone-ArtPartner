@@ -1,11 +1,15 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
 
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 
+import '../models/youtubeVideo.dart';
 import '../services/improve_api_service.dart';
 import '../services/youtube_api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 import '../widgets/appbar.dart';
 
@@ -24,14 +28,23 @@ class _MyArtImproveResultState extends State<ArtImproveResult> {
   bool improveLoading = false;
   String searchKeyword = ''; //gpt4v 결과 기반 관련 검색어
   late Future<List<YouTubeVideo>> futureVideos = Future.value([]);
+  Box improveBox = Hive.box("improveHistory");
+  Uint8List? ImageBytes;
 
+  Future<void> setImage() async{
+    if(widget.selectedImage != null){
+      ImageBytes = await widget.selectedImage!.readAsBytes();
+    }
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (improveResult.isEmpty) {
-      makeResult(); // 화면 실행 시 makeResult() 실행
-    }
+    setImage().then((_){
+      if (improveResult.isEmpty) {
+        makeResult(); // 화면 실행 시 makeResult() 실행
+      }
+    });
   }
 
   makeResult() async {
@@ -44,14 +57,33 @@ class _MyArtImproveResultState extends State<ArtImproveResult> {
         await apiService.sendImageToGPT4Vision(image: widget.selectedImage!);
       }
     } catch (error) {
-      _showErrorBar(error);
+      _showErrorBar(error.toString());
     } finally {
+      searchKeyword = getKeyword(improveResult);
+
       setState(() {
         improveLoading = false;
       });
-      getSearchKeywords();
+
+      await Future.delayed(Duration(seconds: 3)); // 3초 딜레이 추가 - 429 에러 방지
+      setState(() {
+        futureVideos = searchYouTube(searchKeyword); // YouTube 검색
+        futureVideos.then((videos){
+          improveBox.put(
+              DateTime.now().millisecondsSinceEpoch.toString(),
+              {
+                'image': ImageBytes,
+                'text': improveResult,
+                'youtube': videos,
+                'keyword': searchKeyword,
+              }
+          );
+        });
+      });
     }
   }
+
+  /* // gpt 3.5로 검색 키워드 추출 but, 429 error 발생
 
   getSearchKeywords() async {
     if (improveResult != ''){
@@ -71,11 +103,12 @@ class _MyArtImproveResultState extends State<ArtImproveResult> {
       });
     }
   }
+   */
 
 
-  void _showErrorBar(Object error) {
+  void _showErrorBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(error.toString()),
+      content: Text(message),
       backgroundColor: Colors.red,
     ));
   }
@@ -86,6 +119,31 @@ class _MyArtImproveResultState extends State<ArtImproveResult> {
     } else {
       throw 'Could not launch $url';
     }
+  }
+
+  String getKeyword(String myInput) {
+    // '1.'과 ':' 사이의 문자열 추출(정규 표현식 이용)
+    RegExp regExp = RegExp(r'1\.\s*(.*?):');
+    Match? match = regExp.firstMatch(myInput);
+
+    if (match != null) {
+      String? keywords = match.group(1);
+      if (keywords != null) {
+        return keywords; // 리턴 1
+      }
+    } else {
+      // 만약 결과가 비었다면 '1. '과 ' ' 사이의 문자열 추출
+      RegExp regExpTwo = RegExp(r'1\.\s*(\S+)');
+      Match? matchTwo = regExpTwo.firstMatch(myInput);
+
+      if (matchTwo != null) {
+        String? keywordsTwo = matchTwo.group(1);
+        if (keywordsTwo != null) {
+          return keywordsTwo; // 리턴 2
+        }
+      }
+    }
+    return ''; // 결과가 없다면 빈 문자열 반환 (리턴 3)
   }
 
 
@@ -114,7 +172,16 @@ class _MyArtImproveResultState extends State<ArtImproveResult> {
                   style: TextStyle(fontSize: 16, color: Colors.blue),
                 ),
               ),
-            Padding(
+
+            improveLoading
+                ? Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SpinKitWave(
+                color: Colors.blue,
+                size: 30,
+              ),
+            )
+                : Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
                 children: [
@@ -130,6 +197,7 @@ class _MyArtImproveResultState extends State<ArtImproveResult> {
                 ],
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: ExpansionTile(
@@ -201,23 +269,6 @@ class _MyArtImproveResultState extends State<ArtImproveResult> {
               ),
             ),
             SizedBox(height: 40), // 페이지 하단 공백 추가
-            // 'gpt3.5' 버튼 추가
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-              onPressed: () {
-              getSearchKeywords(); // 버튼 클릭 시 getSearchKeywords() 함수 호출
-              },
-              child: Text('gpt3.5'),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'gpt3.5 : $searchKeyword',
-                style: TextStyle(fontSize: 16, color: Colors.blue),
-              ),
-            ),
           ],
         ),
       ),

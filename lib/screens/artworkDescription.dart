@@ -1,13 +1,135 @@
 import 'package:artpartner001/screens/semaSource.dart';
 
 import '../services/google_translate.dart';
-import '../utils/downloadImage.dart';
+import '../utils/artworkDisplay.dart';
 import '../widgets/appbar.dart';
 import 'package:flutter/material.dart';
 import '../constants/api_constants.dart';
 import '../models/clevelandArtwork.dart';
 import '../models/semaArtwork.dart';
-import 'fullScreenView.dart';
+
+class SemaDescriptionAppBar extends StatelessWidget implements PreferredSizeWidget{
+  const SemaDescriptionAppBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      title: Column(
+        children: [
+          Image.asset('assets/images/logo.png', height: 55,),
+          SizedBox(height: 5)
+        ],
+      ),
+      actions: [
+        IconButton(
+          onPressed: (){
+            Navigator.push(context, MaterialPageRoute(builder: (context) => SemaSource()));
+          },
+          icon: Icon(Icons.copyright, size: 35,),)
+      ],
+      scrolledUnderElevation: 0,
+    );
+  }
+
+  @override
+  Size get preferredSize => Size.fromHeight(60.0);
+}
+
+class ArtworkTitle extends StatelessWidget {
+  const ArtworkTitle({super.key, required this.text});
+  final String? text;
+
+  @override
+  Widget build(BuildContext context) {
+    if(text != null){
+      return Text(
+        text!,
+        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        textAlign: TextAlign.center,
+      );
+    }else{
+      return Container();
+    }
+  }
+}
+
+class ArtworkSubTitle extends StatelessWidget {
+  const ArtworkSubTitle({super.key, required this.text});
+  final String? text;
+
+  @override
+  Widget build(BuildContext context) {
+    if(text != null){
+      return Text(
+        text!,
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        textAlign: TextAlign.center,
+      );
+    }else{
+      return Container();
+    }
+  }
+}
+
+class SemaText extends StatelessWidget {
+  const SemaText({super.key, required this.title, required this.text});
+  final String title;
+  final String? text;
+
+  @override
+  Widget build(BuildContext context) {
+    if(text != null && text != ''){
+      return Text(
+        '$title: $text',
+        style: TextStyle(fontSize: 20,),
+        textAlign: TextAlign.center,
+      );
+    }else{
+      return Container();
+    }
+  }
+}
+
+class ClevelandText extends StatelessWidget {
+  const ClevelandText({super.key, required this.title, required this.text});
+  final String title;
+  final String? text;
+
+  @override
+  Widget build(BuildContext context) {
+    if(text != null && text != ''){
+      return Text(
+        '$title: $text',
+        style: TextStyle(fontSize: 20,),
+      );
+    }else{
+      return Container();
+    }
+  }
+}
+
+class ClevelandListText extends StatelessWidget {
+  const ClevelandListText({super.key, required this.title, required this.textList});
+  final String title;
+  final List? textList;
+
+  @override
+  Widget build(BuildContext context) {
+    String text;
+
+    if(textList != null){
+      text=textList!.join(', ');
+      if(text != null && text != ''){
+        return Text(
+          '$title: $text',
+          style: TextStyle(fontSize: 20,),
+        );
+      }
+    }
+    return Container();
+  }
+}
 
 class SemaArtworkDescription extends StatelessWidget {
   SemaArtwork semaArtwork;
@@ -16,71 +138,34 @@ class SemaArtworkDescription extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Column(
-            children: [
-              Image.asset('assets/images/logo.png', height: 55,),
-              SizedBox(height: 5)
-            ],
-          ),
-          actions: [
-            IconButton(
-              onPressed: (){
-                Navigator.push(context, MaterialPageRoute(builder: (context) => SemaSource()));
-              },
-              icon: Icon(Icons.copyright, size: 35,),)
-          ],
-          scrolledUnderElevation: 0,
-        ),
+        appBar: SemaDescriptionAppBar(),
         body: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Stack(
-                  children: [
-                    Image.network(semaArtwork.mainImage!, width: double.infinity, fit: BoxFit.fitWidth,),
-                    Positioned(
-                      child: IconButton(
-                        onPressed: (){
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => FullScreenView(imageUrl: semaArtwork.mainImage!,)));
-                        },
-                        icon: Icon(Icons.fullscreen, color: Colors.white,),
-                        iconSize: 30,
-                      ),
-                      right: 0,
-                      bottom: 0,
-                    ),
-                    Positioned(
-                      child: IconButton(
-                        onPressed: () async{
-                          downloadImage(context, semaArtwork.mainImage!);
-                        },
-                        icon: Icon(Icons.download, color: Colors.white,),
-                        iconSize: 30,
-                      ),
-                      right: 50,
-                      bottom: 0,
-                    ),
-                  ],
-                ),
+                ImageAndButtons(imageUrl: semaArtwork.mainImage),
                 SizedBox(height: 20,),
-                semaArtwork.prdctNmKorean! == semaArtwork.prdctNmEng! ? Text(
-                  semaArtwork.prdctNmKorean!, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold), textAlign: TextAlign.center,
-                ) : Column(
+                semaArtwork.prdctNmKorean! == semaArtwork.prdctNmEng! ? ArtworkTitle(text: semaArtwork.prdctNmKorean,) : Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(semaArtwork.prdctNmKorean!, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
-                    Text(semaArtwork.prdctNmEng!, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
+                    ArtworkTitle(text: semaArtwork.prdctNmKorean,),
+                    ArtworkSubTitle(text: semaArtwork.prdctNmEng,)
                   ],
                 ),
                 SizedBox(height: 20,),
-                Text('제작년도: ${semaArtwork.mnfctYear!}', style: TextStyle(fontSize: 20,), textAlign: TextAlign.center,),
-                Text('작가명: ${semaArtwork.writrNm!}', style: TextStyle(fontSize: 20), textAlign: TextAlign.center,),
-                Text('부문: ${semaArtwork.prdctClNm!}', style: TextStyle(fontSize: 20), textAlign: TextAlign.center,),
-                Text('작품규격: ${semaArtwork.prdctStndrd!}', style: TextStyle(fontSize: 20), textAlign: TextAlign.center,),
-                Text('재료/기법: ${semaArtwork.matrlTechnic!}', style: TextStyle(fontSize: 20), textAlign: TextAlign.center,),
-                semaArtwork.prdctDetail != '' ? Text('작품해설: ${semaArtwork.prdctDetail}', style: TextStyle(fontSize: 20), textAlign: TextAlign.center,) : Container(),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(15,0,15,0),
+                  child: Column(
+                    children: [
+                      SemaText(title: '제작년도', text: semaArtwork.mnfctYear),
+                      SemaText(title: '작가명', text: semaArtwork.writrNm),
+                      SemaText(title: '부문', text: semaArtwork.prdctClNm),
+                      SemaText(title: '작품규격', text: semaArtwork.prdctStndrd),
+                      SemaText(title: '재료/기법', text: semaArtwork.matrlTechnic),
+                      SemaText(title: '작품해설', text: semaArtwork.prdctDetail),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 40,),
               ],
             )
@@ -105,6 +190,7 @@ class _ClevelandArtworkDescriptionState extends State<ClevelandArtworkDescriptio
   bool showTranslated = false;
   bool translated = false;
   String translateButtonText = '번역 보기';
+  bool isLoading = false;
 
   String removeHtmlTags(String htmlString) {
     RegExp exp = RegExp(r"<[^>]*>", multiLine: true, caseSensitive: true);
@@ -116,26 +202,13 @@ class _ClevelandArtworkDescriptionState extends State<ClevelandArtworkDescriptio
     // TODO: implement initState
     super.initState();
 
-    if(widget.clevelandArtwork.images == null) imageUrl=null;
-    else if(widget.clevelandArtwork.images!.web == null) imageUrl=null;
-    else if(widget.clevelandArtwork.images!.web!.url == null) imageUrl=null;
-    else imageUrl=widget.clevelandArtwork.images!.web!.url!;
+    imageUrl = widget.clevelandArtwork.images?.web?.url ?? null;
 
-    if(widget.clevelandArtwork.creators == null){
-      creatorsDescription = null;
-    }else if(widget.clevelandArtwork.creators!.isEmpty){
-      creatorsDescription = null;
-    }else{
-      for(final creator in widget.clevelandArtwork.creators!){
-        creatorsDescription = [];
-        if(creator.description != null){
-          creatorsDescription!.add(creator.description!);
-
-        }else{
-          creatorsDescription!.add('');
-        }
-      }
-    }
+    creatorsDescription = widget.clevelandArtwork.creators?.isEmpty ?? true
+        ? null
+        : widget.clevelandArtwork.creators!
+        .map((creator) => creator.description ?? '')
+        .toList();
 
     if(widget.clevelandArtwork.description != null){
       widget.clevelandArtwork.description = removeHtmlTags(widget.clevelandArtwork.description!);
@@ -148,7 +221,11 @@ class _ClevelandArtworkDescriptionState extends State<ClevelandArtworkDescriptio
     }
   }
 
-  void translate(){
+  void translate() async {
+    setState(() {
+      isLoading = true;
+    });
+
     translatedArtwork = ClevelandArtwork.clone(widget.clevelandArtwork);
     translatedCreatorsDescription = creatorsDescription;
 
@@ -157,82 +234,66 @@ class _ClevelandArtworkDescriptionState extends State<ClevelandArtworkDescriptio
       targetLanguage: "ko",
     );
 
-    widget.clevelandArtwork.title != null ? widget.clevelandArtwork.title!.translate().then((value){
-      setState(() {
-        translatedArtwork.title = value;
-      });
-    }) : null;
+    if (widget.clevelandArtwork.title != null) {
+      translatedArtwork.title = await widget.clevelandArtwork.title!.translate();
+    }
 
-    widget.clevelandArtwork.creationDate != null ? widget.clevelandArtwork.creationDate!.translate().then((value){
-      setState(() {
-        translatedArtwork.creationDate = value;
-      });
-    }) : null;
+    if (widget.clevelandArtwork.creationDate != null) {
+      translatedArtwork.creationDate = await widget.clevelandArtwork.creationDate!.translate();
+    }
 
-    if(creatorsDescription != null){
+    if (creatorsDescription != null) {
       translatedCreatorsDescription = [];
-      for(final creator in creatorsDescription!){
-        if(creator != null){
-          creator.translate().then((value){
-            setState(() {
-              translatedCreatorsDescription!.add(value);
-            });
-          });
-        }else translatedCreatorsDescription = null;
+      for (final creator in creatorsDescription!) {
+        if (creator != null) {
+          final translatedCreator = await creator.translate();
+          translatedCreatorsDescription!.add(translatedCreator);
+        }
       }
-    }else translatedCreatorsDescription = null;
+    } else {
+      translatedCreatorsDescription = null;
+    }
 
+    if (widget.clevelandArtwork.department != null) {
+      translatedArtwork.department = await widget.clevelandArtwork.department!.translate();
+    }
 
-    widget.clevelandArtwork.department != null ? widget.clevelandArtwork.department!.translate().then((value){
-      setState(() {
-        translatedArtwork.department = value;
-      });
-    }) : null;
+    if (widget.clevelandArtwork.type != null) {
+      translatedArtwork.type = await widget.clevelandArtwork.type!.translate();
+    }
 
-    widget.clevelandArtwork.type != null ? widget.clevelandArtwork.type!.translate().then((value){
-      setState(() {
-        translatedArtwork.type = value;
-      });
-    }) : null;
-
-    if(widget.clevelandArtwork.culture != null){
+    if (widget.clevelandArtwork.culture != null) {
       translatedArtwork.culture = [];
-      for(final culture in widget.clevelandArtwork.culture!){
-        if(culture != null){
-          culture.translate().then((value){
-            setState(() {
-              translatedArtwork.culture!.add(value);
-            });
-          });
-        }else translatedArtwork.culture = null;
+      for (final culture in widget.clevelandArtwork.culture!) {
+        if (culture != null) {
+          final translatedCulture = await culture.translate();
+          translatedArtwork.culture!.add(translatedCulture);
+        }
       }
-    }else translatedArtwork.culture = null;
+    } else {
+      translatedArtwork.culture = null;
+    }
 
-    widget.clevelandArtwork.measurements != null ? widget.clevelandArtwork.measurements!.translate().then((value){
-      setState(() {
-        translatedArtwork.measurements = value;
-      });
-    }) : null;
+    if (widget.clevelandArtwork.measurements != null) {
+      translatedArtwork.measurements = await widget.clevelandArtwork.measurements!.translate();
+    }
 
-    widget.clevelandArtwork.technique != null ? widget.clevelandArtwork.technique!.translate().then((value){
-      setState(() {
-        translatedArtwork.technique = value;
-      });
-    }) : null;
+    if (widget.clevelandArtwork.technique != null) {
+      translatedArtwork.technique = await widget.clevelandArtwork.technique!.translate();
+    }
 
-    widget.clevelandArtwork.series != null ? widget.clevelandArtwork.series!.translate().then((value){
-      setState(() {
-        translatedArtwork.series = value;
-      });
-    }) : null;
+    if (widget.clevelandArtwork.series != null) {
+      translatedArtwork.series = await widget.clevelandArtwork.series!.translate();
+    }
 
-    widget.clevelandArtwork.description != null ? widget.clevelandArtwork.description!.translate().then((value){
-      setState(() {
-        translatedArtwork.description = value;
-      });
-    }) : null;
+    if (widget.clevelandArtwork.description != null) {
+      translatedArtwork.description = await widget.clevelandArtwork.description!.translate();
+    }
 
-    translated = true;
+    setState(() {
+      isLoading = false;
+      translated = true;
+    });
   }
 
   @override
@@ -244,148 +305,64 @@ class _ClevelandArtworkDescriptionState extends State<ClevelandArtworkDescriptio
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Stack(
-                  children: [
-                    imageUrl != null ? Image.network(imageUrl!, width: double.infinity, fit: BoxFit.fitWidth) : Container(),
-                    Positioned(
-                      child: IconButton(
-                        onPressed: (){
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => FullScreenView(imageUrl: imageUrl!,)));
-                        },
-                        icon: Icon(Icons.fullscreen, color: Colors.white,),
-                        iconSize: 30,
+                ImageAndButtons(imageUrl: imageUrl,),
+                if(isLoading)
+                  Container(
+                      height: 300,
+                      child: Center(child: CircularProgressIndicator())
+                  ),
+                if(!isLoading && !showTranslated)
+                  Column(
+                    children: [
+                      SizedBox(height: 20,),
+                      ArtworkTitle(text: widget.clevelandArtwork.title,),
+                      SizedBox(height: 20,),
+                      Padding(
+                        padding: EdgeInsets.all(15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            ClevelandText(title: '제작일', text: widget.clevelandArtwork.creationDate),
+                            ClevelandListText(title: '창작자', textList: creatorsDescription),
+                            ClevelandText(title: '부문', text: widget.clevelandArtwork.department),
+                            ClevelandText(title: '유형', text: widget.clevelandArtwork.type),
+                            ClevelandListText(title: '문화', textList: widget.clevelandArtwork.culture),
+                            ClevelandText(title: '크기', text: widget.clevelandArtwork.measurements),
+                            ClevelandText(title: '재료/기법', text: widget.clevelandArtwork.technique),
+                            ClevelandText(title: '시리즈', text: widget.clevelandArtwork.series),
+                            ClevelandText(title: '설명', text: widget.clevelandArtwork.description),
+                          ],
+                        ),
                       ),
-                      right: 0,
-                      bottom: 0,
-                    ),
-                    Positioned(
-                      child: IconButton(
-                        onPressed: () async{
-                          downloadImage(context, imageUrl!);
-                        },
-                        icon: Icon(Icons.download, color: Colors.white,),
-                        iconSize: 30,
+                    ],
+                  ),
+                if(!isLoading && showTranslated)
+                  Column(
+                    children: [
+                      SizedBox(height: 20,),
+                      ArtworkTitle(text: translatedArtwork.title,),
+                      SizedBox(height: 20,),
+                      Padding(
+                        padding: EdgeInsets.all(15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            ClevelandText(title: '제작일', text: translatedArtwork.creationDate),
+                            ClevelandListText(title: '창작자', textList: translatedCreatorsDescription),
+                            ClevelandText(title: '부문', text: translatedArtwork.department),
+                            ClevelandText(title: '유형', text: translatedArtwork.type),
+                            ClevelandListText(title: '문화', textList: translatedArtwork.culture),
+                            ClevelandText(title: '크기', text: translatedArtwork.measurements),
+                            ClevelandText(title: '재료/기법', text: translatedArtwork.technique),
+                            ClevelandText(title: '시리즈', text: translatedArtwork.series),
+                            ClevelandText(title: '설명', text: translatedArtwork.description),
+                          ],
+                        ),
                       ),
-                      right: 50,
-                      bottom: 0,
-                    ),
-                  ],
-                ),
-                !showTranslated ? Column(
-                  children: [
-                    SizedBox(height: 20,),
-                    widget.clevelandArtwork.title != null ? Center(
-                        child: Text(
-                          widget.clevelandArtwork.title!,
-                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                          textAlign: TextAlign.center,
-                        )
-                    ) : Container(),
-                    SizedBox(height: 20,),
-                    Container(
-                      padding: EdgeInsets.all(15),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-
-                        children: [
-                          widget.clevelandArtwork.creationDate != null ? Text(
-                              '제작일: ${widget.clevelandArtwork.creationDate}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          creatorsDescription != null ? Text(
-                              '창작자: ${creatorsDescription!.join(', ')}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          widget.clevelandArtwork.department != null ? Text(
-                              '부문: ${widget.clevelandArtwork.department}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          widget.clevelandArtwork.type != null ? Text(
-                              '유형: ${widget.clevelandArtwork.type}', style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          widget.clevelandArtwork.culture != null ? Text(
-                              '문화: ${widget.clevelandArtwork.culture!.join(', ')}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          widget.clevelandArtwork.measurements != null ? Text(
-                              '크기: ${widget.clevelandArtwork.measurements}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          widget.clevelandArtwork.technique != null ? Text(
-                              '재료/기법: ${widget.clevelandArtwork.technique}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          widget.clevelandArtwork.series != null ? Text(
-                              '시리즈: ${widget.clevelandArtwork.series}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          widget.clevelandArtwork.description != null ? Text(
-                              '설명: ${widget.clevelandArtwork.description}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ) : Column(
-                  children: [
-                    SizedBox(height: 20,),
-                    translatedArtwork.title != null ? Center(
-                        child: Text(
-                          translatedArtwork.title!,
-                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                          textAlign: TextAlign.center,
-                        )
-                    ) : Container(),
-                    SizedBox(height: 20,),
-                    Container(
-                      padding: EdgeInsets.all(15),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          translatedArtwork.creationDate != null ? Text(
-                              '제작일: ${translatedArtwork.creationDate}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          translatedCreatorsDescription != null ? Text(
-                              '창작자: ${translatedCreatorsDescription!.join(', ')}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          translatedArtwork.department != null ?
-                          Text('부문: ${translatedArtwork.department}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          translatedArtwork.type != null ? Text(
-                              '유형: ${translatedArtwork.type}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          translatedArtwork.culture != null ?
-                          Text('문화: ${translatedArtwork.culture!.join(', ')}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          translatedArtwork.measurements != null ? Text(
-                              '크기: ${translatedArtwork.measurements}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          translatedArtwork.technique != null ? Text(
-                              '재료/기법: ${translatedArtwork.technique}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          translatedArtwork.series != null ? Text(
-                              '시리즈: ${translatedArtwork.series}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                          translatedArtwork.description != null ? Text(
-                              '설명: ${translatedArtwork.description}',
-                              style: TextStyle(fontSize: 20,)
-                          ) : Container(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 Center(
                   child: TextButton(
                     child:Text(translateButtonText, style: TextStyle(fontSize: 16)),

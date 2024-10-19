@@ -6,7 +6,15 @@ import 'package:dio/dio.dart';
 import '../constants/api_constants.dart';
 
 class ApiService {
-  final Dio _dio = Dio();
+  late Dio _dio;
+
+  //생성자, 429 에러 상세 내용 전달을 위함, 박준수
+  ApiService() {
+    _dio = Dio();
+    _dio.options.validateStatus = (status) {
+      return status! < 500 || status == 429; // 429 상태 코드 허용
+    };
+  }
 
   Future<String> encodeImage(File image) async {
     final bytes = await image.readAsBytes();
@@ -75,7 +83,7 @@ class ApiService {
                 {
                   'type': 'text',
                   'text':
-                  'Please let me know how I can improve this painting. Answer in Korean.'
+                  'Please let me know how I can improve this painting. You must describe each using numbers and colons(example: 1. Add something: ), the most important improvements should always come first. Answer in Korean.'
                 },
                 {
                   'type': 'image_url',

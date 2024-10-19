@@ -3,12 +3,15 @@ import 'dart:io';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-
+import 'package:provider/provider.dart';
+import '../utils/timerProvider.dart';
 import '../services/improve_api_service.dart';
 
-import '../widgets/appbar.dart';
 import '../screens/artimprove_result.dart';
+import 'history.dart';
 
 class ArtImprove extends StatefulWidget {
   const ArtImprove({super.key});
@@ -24,7 +27,7 @@ class _MyArtImproveState extends State<ArtImprove> {
   String gptResult = '';
   bool detecting = false;
   bool resultLoading = false;
-
+  Box improveBox = Hive.box("improveHistory");
 
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile =
@@ -80,7 +83,35 @@ class _MyArtImproveState extends State<ArtImprove> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:BaseAppBar(),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        title: Column(
+          children: [
+            Image.asset('assets/images/logo.png', height: 55,),
+            SizedBox(height: 5)
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ImproveHistory()));
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '지난 기록',
+                ),
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.history,
+                )
+              ],
+            ),
+          )
+        ],
+        scrolledUnderElevation: 0,
+      ),
       body: Column(
         children: <Widget>[
           const SizedBox(height: 20),
@@ -194,18 +225,32 @@ class _MyArtImproveState extends State<ArtImprove> {
                 )
                     : ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Color(0xFFC6BFA6),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 30, vertical: 15),
                   ),
-                  onPressed: _goToResultPage,
+                  onPressed: () {
+                    final timerProvider = Provider.of<TimerProvider>(context, listen: false);
+                    if (timerProvider.timerCompleted) {
+                      // 타이머가 완료되었을 경우 결과 페이지 이동
+                      timerProvider.startTimer();
+                      _goToResultPage();
+                    } else {
+                      // 타이머가 완료되지 않았을 경우 경고 메시지 표시
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('과도한 요청 발생. 잠시 후 다시 시도해주세요.'),
+                        ),
+                      );
+                    }
+                  },
                   child: Text(
                     '개선 방법 검색',
                     style: TextStyle(
-                      color: Colors.white, // Set the text color to white
-                      fontSize: 16, // Set the font size
+                      color: Colors.black,
+                      fontSize: 16,
                       fontWeight:
-                      FontWeight.bold, // Set the font weight to bold
+                      FontWeight.bold,
                     ),
                   ),
                 ),

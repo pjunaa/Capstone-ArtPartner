@@ -1,12 +1,11 @@
 import 'dart:typed_data';
 
-import 'package:artpartner001/screens/fullScreenView.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/youtubeVideo.dart';
-import '../utils/downloadImage.dart';
+import '../utils/artworkDisplay.dart';
 import '../utils/historyUtils.dart';
 import 'historyEdit.dart';
 
@@ -55,8 +54,8 @@ class HistoryDetailAppBar extends StatelessWidget implements PreferredSizeWidget
                       TextButton(
                           onPressed: () {
                             Navigator.of(context).pop();
-                            box.delete(boxKey);
                             Navigator.of(context).pop();
+                            box.delete(boxKey);
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                               content: Text("기록이 삭제되었습니다."),
                             ));
@@ -76,46 +75,6 @@ class HistoryDetailAppBar extends StatelessWidget implements PreferredSizeWidget
   Size get preferredSize => Size.fromHeight(60.0);
 }
 
-class ImageAndButtons extends StatelessWidget {
-  const ImageAndButtons({super.key, required this.imageBytes});
-  final Uint8List? imageBytes;
-
-  @override
-  Widget build(BuildContext context) {
-    if(imageBytes != null){
-      return Stack(
-        children: [
-          Image.memory(imageBytes!),
-          Positioned(
-            child: IconButton(
-              onPressed: (){
-                Navigator.push(context, MaterialPageRoute(builder: (context) => FullScreenView_imageBytes(imageBytes: imageBytes!)));
-              },
-              icon: Icon(Icons.fullscreen, color: Colors.white,),
-              iconSize: 30,
-            ),
-            right: 0,
-            bottom: 0,
-          ),
-          Positioned(
-            child: IconButton(
-              onPressed: () async{
-                downloadImage_imageBytes(context, imageBytes!);
-              },
-              icon: Icon(Icons.download, color: Colors.white,),
-              iconSize: 30,
-            ),
-            right: 50,
-            bottom: 0,
-          ),
-        ],
-      );
-    }else{
-      return Text('No image saved');
-    }
-  }
-}
-
 class HistoryDescription extends StatelessWidget {
   const HistoryDescription({super.key, required this.text});
   final String text;
@@ -123,11 +82,11 @@ class HistoryDescription extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20),
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 20),
-      )
+        padding: EdgeInsets.all(20),
+        child: Text(
+          text,
+          style: TextStyle(fontSize: 20),
+        )
     );
   }
 }
@@ -162,7 +121,7 @@ class _AnalyzeHistoryDetailState extends State<AnalyzeHistoryDetail> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            ImageAndButtons(imageBytes: imageBytes),
+            ImageAndButtons_imageBytes(imageBytes: imageBytes),
             HistoryDescription(text: analyzeBox.get(widget.boxKey)['text']),
             SizedBox(height: 40,)
           ],
@@ -191,21 +150,21 @@ class _ImproveHistoryDetailState extends State<ImproveHistoryDetail> {
     super.initState();
     addBoxListener(this, improveBox);
     imageBytes = improveBox.get(widget.boxKey)['image'];
-    videos = (improveBox.getAt(0)['youtube'] as List).cast<YouTubeVideo>();
+    videos = (improveBox.get(widget.boxKey)['youtube'] as List).cast<YouTubeVideo>();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: HistoryDetailAppBar(box: improveBox, boxKey: widget.boxKey, onEditPressed: (){
-      Navigator.push(context, MaterialPageRoute(builder: (context) => ImproveHistoryEdit(boxKey: widget.boxKey)));
-    }),
+        Navigator.push(context, MaterialPageRoute(builder: (context) => ImproveHistoryEdit(boxKey: widget.boxKey)));
+      }),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            ImageAndButtons(imageBytes: imageBytes),
+            ImageAndButtons_imageBytes(imageBytes: imageBytes),
             HistoryDescription(text: improveBox.get(widget.boxKey)['text']),
-            YoutubeVideosDisplay(videos: videos),
+            YoutubeVideosDisplay(videos: videos, keyword: improveBox.get(widget.boxKey)['keyword'],),
             SizedBox(height: 40,)
           ],
         ),
