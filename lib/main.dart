@@ -4,6 +4,7 @@ import 'screens/home.dart';
 import 'services/hiveService.dart';
 import 'utils/timerProvider.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await HiveService.init();

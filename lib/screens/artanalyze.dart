@@ -25,7 +25,7 @@ class ArtAnalyze extends StatefulWidget {
 class _MyArtAnalyzeState extends State<ArtAnalyze> {
   final apiService = ApiService();
   File? _selectedImage;
-  String nameCheck = '';  // 이전 diseaseName
+  String nameCheck = '';
   String gptResult = '';
   bool detecting = false;
   bool resultLoading = false;
@@ -46,6 +46,7 @@ class _MyArtAnalyzeState extends State<ArtAnalyze> {
     }
   }
 
+  /*
   detectDisease() async {
     setState(() {
       detecting = true;
@@ -60,7 +61,7 @@ class _MyArtAnalyzeState extends State<ArtAnalyze> {
         detecting = false;
       });
     }
-  }
+  }*/
 
   showResult() async {
     setState(() {
@@ -69,7 +70,7 @@ class _MyArtAnalyzeState extends State<ArtAnalyze> {
     try {
       if (gptResult == '') {
         gptResult =
-        await apiService.sendImageToGPT4Vision(image: _selectedImage!);
+        await apiService.sendImageToGPT4Vision_2(image: _selectedImage!);
         // apiService.sendMessageGPT(nameCheck: nameCheck); | GPT3.5 분석답변을 GPT4Vision으로 변경
 
         // gptResult = 'gptResult' + DateTime.now().millisecondsSinceEpoch.toString()+'\n이 그림은 다음과 같은 기법을 사용하여 정경을 생동감 있게 표현한 작은 집을 그리고 있습니다:\n1. 질감: 건조 브러쉬 기법처럼 보이는 두꺼운 페인트 사용은 잔디와 집에 질감을 주어 손으로 만질 수 있는, 거칠고 자연스러운 느낌을 줍니다.\n2. 색상 그라데이션: 하늘은 따뜻한 보라색에서 시원한 파란색으로 부드럽게 전환되어 평온하고 차분한 분위기를 만들어냅니다.\n3. 구성: 집은 중심에서 벗어나 있으며, 삼분법을 따라 자연스럽고 미적으로 즐거운 경치를 제공합니다.\n4. 색상 대비: 주변 배경의 절제된 색상과 대비되는 집 의 선명한 빨간색 문은 중심 지점으로 시선을 끌어냅니다.\n5. 원근법: 집으로 이어지는 길에는 원근법이 시도되고 있지만, 깊이의 느낌을 강화하기 위해 좀 더 의도적인 소실점을 사용하면 도움이 될 것입니다.';
@@ -118,6 +119,7 @@ class _MyArtAnalyzeState extends State<ArtAnalyze> {
       ),
       btnOkText: '확인',
       btnOkOnPress: () {},
+      btnOkColor: const Color(0xFFBBAF96),
     ).show();
   }
 

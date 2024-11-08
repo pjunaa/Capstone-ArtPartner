@@ -54,7 +54,7 @@ class _MyArtImproveResultState extends State<ArtImproveResult> {
     try {
       if (improveResult == '') {
         improveResult =
-        await apiService.sendImageToGPT4Vision(image: widget.selectedImage!);
+        await apiService.sendImageToGPT4Vision_2(image: widget.selectedImage!);
       }
     } catch (error) {
       _showErrorBar(error.toString());
@@ -82,29 +82,6 @@ class _MyArtImproveResultState extends State<ArtImproveResult> {
       });
     }
   }
-
-  /* // gpt 3.5로 검색 키워드 추출 but, 429 error 발생
-
-  getSearchKeywords() async {
-    if (improveResult != ''){
-      String shortImproveResult = '';
-
-      if (improveResult.length > 80) {
-        shortImproveResult = improveResult.substring(0, 80);
-      } else {
-        shortImproveResult = improveResult;
-      }
-
-      String result = await apiService.sendMessageGPT(input_string: shortImproveResult); // gpt 3.5로 검색 키워드 추출
-
-      setState(() {
-        searchKeyword = result;
-        futureVideos = searchYouTube(searchKeyword); // YouTube 검색
-      });
-    }
-  }
-   */
-
 
   void _showErrorBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -143,7 +120,7 @@ class _MyArtImproveResultState extends State<ArtImproveResult> {
         }
       }
     }
-    return ''; // 결과가 없다면 빈 문자열 반환 (리턴 3)
+    return ''; // 결과가 없다면 빈 문자열 반환 , 리턴 3
   }
 
 

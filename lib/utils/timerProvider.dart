@@ -14,7 +14,7 @@ class TimerProvider with ChangeNotifier {
     _timerCompleted = false; // 타이머 시작
     notifyListeners();
 
-    _timer = Timer(Duration(seconds: 60), () {
+    _timer = Timer(Duration(seconds: 2), () {
       _timerCompleted = true; // 타이머 완료
       notifyListeners();
     });

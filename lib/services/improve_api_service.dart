@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 
 import 'package:dio/dio.dart';
 
@@ -107,6 +108,61 @@ class ApiService {
       return jsonResponse["choices"][0]["message"]["content"];
     } catch (e) {
       throw Exception('Error: $e');
+    }
+  }
+
+  //1d383e0535be3bebab1394ff988fc962716cc986328c384410f0926b4495adb2 - 학과 제공
+  Future<String> sendImageToGPT4Vision_2({
+    required File image,
+    String model = "gpt-4o-2024-05-13",
+  }) async {
+    final url = Uri.parse('https://api.openai.com/v1/chat/completions');
+    final String base64Image = await encodeImage(image);
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $API_KEY_2',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'model': model,
+          'messages': [
+            {
+              'role': 'system',
+              'content': 'You are a helpful assistant with the drawing.'
+            },
+            {
+              'role': 'user',
+              'content': [
+                {
+                  'type': 'text',
+                  'text':
+                  'Please let me know how I can improve my painting. You must describe each using numbers and colons(example: 1. Add something: ), the most important improvements should always come first. You do not have to make any other unnecessary answers. Answer in Korean. If you cannot do that, explain why.'
+                },
+                {
+                  'type': 'image_url',
+                  'image_url': {
+                    'url': 'data:image/jpeg;base64,$base64Image',
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
+        return jsonResponse["choices"][0]["message"]["content"] ?? "No content returned.";
+      } else {
+        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
+        return jsonResponse["error"]?["message"] ?? "Unknown error occurred.";
+      }
+
+    } catch (error) {
+      throw Exception('Error: $error');
     }
   }
 }

@@ -5,21 +5,75 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'widgets/appbar.dart';
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:io';
+import 'dart:math';
+import 'widgets/appbar.dart';
+import 'constants/api_constants.dart';
+
+// Subcategory 클래스를 정의합니다.
+class Subcategory {
+  final String nameKorean;
+  final String descriptionEnglish;
+
+  Subcategory({required this.nameKorean, required this.descriptionEnglish});
+}
+
+// 카테고리와 서브카테고리에 영어 설명을 추가합니다.
+final Map<String, List<Subcategory>> categories = {
+  '정물화': [
+    Subcategory(nameKorean: '과일', descriptionEnglish: 'Fruit still life'),
+    Subcategory(nameKorean: '꽃병', descriptionEnglish: 'Vase with flowers'),
+    Subcategory(nameKorean: '그릇', descriptionEnglish: 'Dish or bowl'),
+    Subcategory(nameKorean: '의자', descriptionEnglish: 'Chair'),
+    Subcategory(nameKorean: '와인병', descriptionEnglish: 'Wine bottle'),
+    Subcategory(nameKorean: '식탁보', descriptionEnglish: 'Tablecloth'),
+    Subcategory(nameKorean: '찻잔', descriptionEnglish: 'Teacup'),
+  ],
+  '풍경화': [
+    Subcategory(nameKorean: '산', descriptionEnglish: 'Mountain landscape'),
+    Subcategory(nameKorean: '바다', descriptionEnglish: 'Sea or ocean view'),
+    Subcategory(nameKorean: '숲', descriptionEnglish: 'Forest scenery'),
+    Subcategory(nameKorean: '계곡', descriptionEnglish: 'Valley'),
+    Subcategory(nameKorean: '오두막', descriptionEnglish: 'Cabin'),
+    Subcategory(nameKorean: '건물', descriptionEnglish: 'Building'),
+    Subcategory(nameKorean: '호수', descriptionEnglish: 'Lake'),
+  ],
+  '인물화': [
+    Subcategory(nameKorean: '남자 아이', descriptionEnglish: 'Portrait of a boy'),
+    Subcategory(nameKorean: '여자 아이', descriptionEnglish: 'Portrait of a girl'),
+    Subcategory(nameKorean: '성인 남자', descriptionEnglish: 'Portrait of an adult man'),
+    Subcategory(nameKorean: '성인 여자', descriptionEnglish: 'Portrait of an adult woman'),
+    Subcategory(nameKorean: '남자 노인', descriptionEnglish: 'Portrait of an elderly man'),
+    Subcategory(nameKorean: '여자 노인', descriptionEnglish: 'Portrait of an elderly woman'),
+  ],
+  '동물화': [
+    Subcategory(nameKorean: '말', descriptionEnglish: 'Horse'),
+    Subcategory(nameKorean: '새', descriptionEnglish: 'Bird'),
+    Subcategory(nameKorean: '개', descriptionEnglish: 'Dog'),
+    Subcategory(nameKorean: '소', descriptionEnglish: 'Cow'),
+    Subcategory(nameKorean: '사자', descriptionEnglish: 'Lion'),
+    Subcategory(nameKorean: '고양이', descriptionEnglish: 'Cat'),
+    Subcategory(nameKorean: '양', descriptionEnglish: 'Sheep'),
+  ],
+};
 
 enum ImageMode { blackAndWhite, color }
+
+// Tag 클래스를 수정하여 Subcategory를 포함합니다.
+class Tag {
+  final String category;
+  final Subcategory? subcategory;
+
+  Tag({required this.category, this.subcategory});
+}
 
 class TestSketches extends StatelessWidget {
   const TestSketches({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SearchScreen(); // SearchScreen 클래스 호출
+    return SearchScreen(); // SearchScreen 호출
   }
 }
 
@@ -30,129 +84,163 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _textController = TextEditingController();
-  ImageMode _imageMode = ImageMode.color; // 디폴트로 컬러 모드
-  String? selectedTag; // 선택된 태그 저장
+  ImageMode _imageMode = ImageMode.color;
+  Tag? selectedTag;
+
+  // 랜덤 서브카테고리 가져오기 함수
+  Subcategory _getRandomSubcategory({String? category}) {
+    final random = Random();
+    if (category != null && categories.containsKey(category)) {
+      final subcategories = categories[category]!;
+      return subcategories[random.nextInt(subcategories.length)];
+    } else {
+      final allSubcategories = categories.values.expand((e) => e).toList();
+      return allSubcategories[random.nextInt(allSubcategories.length)];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: BaseAppBar(),
+      appBar: BaseAppBar(), // BaseAppBar는 appbar.dart에서 정의된 AppBar 위젯입니다.
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // 좌측 정렬
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: TextField(
-              controller: _textController,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: selectedTag == null
-                    ? '생성할 이미지를 작성하세요'
-                    : '추가할 설명을 작성하세요', // 태그가 있을 때 메시지 변경
-                prefixIcon: IconButton(
-                  icon: Icon(Icons.settings), // 설정 아이콘
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TagSearchScreen(
-                          onTagSelected: (String tag) {
-                            setState(() {
-                              selectedTag = tag; // 태그 선택
-                            });
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ),
-                    );
-                  },
+          _buildTextField(),
+          if (selectedTag != null) _buildSelectedTag(),
+          SizedBox(height: 20),
+          _buildImageModeSelector(),
+          SizedBox(height: 20),
+          _buildGenerateButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: TextField(
+        controller: _textController,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          hintText: selectedTag == null
+              ? '생성할 이미지를 작성하세요'
+              : '추가할 설명을 작성하세요',
+          prefixIcon: IconButton(
+            icon: Icon(Icons.filter_list),
+            onPressed: () async {
+              final tag = await Navigator.push<Tag>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TagSearchScreen(),
                 ),
-              ),
-            ),
+              );
+              if (tag != null) {
+                setState(() {
+                  selectedTag = tag;
+                });
+              }
+            },
           ),
-          // 선택된 태그를 TextField 아래에 표시
-          if (selectedTag != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 16.0, top: 8.0),
-              child: Row(
-                children: [
-                  Text(
-                    '선택된 태그: ',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Chip(
-                    label: Text(selectedTag!),
-                    deleteIcon: Icon(Icons.close),
-                    onDeleted: () {
-                      setState(() {
-                        selectedTag = null; // 태그 삭제
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-          SizedBox(height: 20),
-          // 흑백/컬러 선택
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('흑백'),
-              Radio(
-                value: ImageMode.blackAndWhite,
-                groupValue: _imageMode,
-                onChanged: (ImageMode? value) {
-                  setState(() {
-                    _imageMode = value!;
-                  });
-                },
-              ),
-              Text('컬러'),
-              Radio(
-                value: ImageMode.color,
-                groupValue: _imageMode,
-                onChanged: (ImageMode? value) {
-                  setState(() {
-                    _imageMode = value!;
-                  });
-                },
-              ),
-            ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectedTag() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16.0, top: 8.0),
+      child: Row(
+        children: [
+          Text(
+            '선택된 태그: ',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 20),
-          // 도안생성 버튼
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                if (_textController.text.isEmpty && selectedTag == null) {
-                  _showWarningDialog(context); // 경고창 띄우기
-                } else {
-                  String description = selectedTag ?? '';
-                  if (_textController.text.isNotEmpty) {
-                    description += '. ' + _textController.text;
-                  }
-                  _navigateToResultScreen(context, description);
-                }
-              },
-              child: Text('도안생성'),
-            ),
+          Chip(
+            label: Text(selectedTag!.subcategory?.nameKorean ?? selectedTag!.category),
+            deleteIcon: Icon(Icons.close),
+            onDeleted: () {
+              setState(() {
+                selectedTag = null;
+              });
+            },
           ),
         ],
       ),
     );
   }
 
-  void _navigateToResultScreen(BuildContext context, String description) {
-    // 기본적으로 스케치 스타일 추가
-    String basePrompt = '$description in sketch style, drawn in a hand-drawn style.';
+  Widget _buildImageModeSelector() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('흑백'),
+        Radio<ImageMode>(
+          value: ImageMode.blackAndWhite,
+          groupValue: _imageMode,
+          onChanged: (value) {
+            setState(() {
+              _imageMode = value!;
+            });
+          },
+        ),
+        Text('컬러'),
+        Radio<ImageMode>(
+          value: ImageMode.color,
+          groupValue: _imageMode,
+          onChanged: (value) {
+            setState(() {
+              _imageMode = value!;
+            });
+          },
+        ),
+      ],
+    );
+  }
 
-    // 흑백 또는 컬러 모드에 따라 프롬프트 수정
-    String modeDescription = _imageMode == ImageMode.blackAndWhite
+  Widget _buildGenerateButton() {
+    return Center(
+      child: ElevatedButton(
+        onPressed: _onGeneratePressed,
+        child: Text('도안생성'),
+      ),
+    );
+  }
+
+  Future<void> _onGeneratePressed() async {
+    String description = '';
+    if (_textController.text.isEmpty) {
+      if (selectedTag != null) {
+        if (selectedTag!.subcategory != null) {
+          description = selectedTag!.subcategory!.descriptionEnglish;
+        } else {
+          description =
+              _getRandomSubcategory(category: selectedTag!.category).descriptionEnglish;
+        }
+      } else {
+        description = _getRandomSubcategory().descriptionEnglish;
+      }
+    } else {
+      final translatedText = await _translateText(_textController.text);
+      if (selectedTag != null && selectedTag!.subcategory != null) {
+        description =
+        '${selectedTag!.subcategory!.descriptionEnglish}. $translatedText';
+      } else {
+        description = translatedText;
+      }
+    }
+    _navigateToResultScreen(description);
+  }
+
+  void _navigateToResultScreen(String description) {
+    final basePrompt =
+        '$description in sketch style, drawn in a hand-drawn style.';
+    final modeDescription = _imageMode == ImageMode.blackAndWhite
         ? 'The image should be in black and white, with no colors.'
         : 'The image should be in full color, with vivid and realistic colors.';
-
-    String fullDescription = '$basePrompt $modeDescription';
+    final fullDescription = '$basePrompt $modeDescription';
 
     Navigator.push(
       context,
@@ -162,41 +250,40 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  void _showWarningDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('경고'),
-          content: Text('생성할 이미지를 작성하세요.'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('확인'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+  Future<String> _translateText(String text) async {
+    //final Deepl_KEY // Deepl API 키를 입력하세요
+    final url = Uri.parse('https://api-free.deepl.com/v2/translate');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {
+          'auth_key': Deepl_KEY,
+          'text': text,
+          'target_lang': 'EN',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['translations'][0]['text'];
+      } else {
+        print('Deepl API 오류: ${response.body}');
+        return text;
+      }
+    } catch (e) {
+      print('Deepl API 예외 발생: $e');
+      return text;
+    }
   }
 }
 
-// 태그 검색 화면
 class TagSearchScreen extends StatelessWidget {
-  final Function(String) onTagSelected;
-
-  const TagSearchScreen({required this.onTagSelected, Key? key}) : super(key: key);
+  const TagSearchScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    Map<String, List<String>> categories = {
-      '정물화': ['과일', '꽃병', '그릇'],
-      '풍경화': ['산', '바다', '숲'],
-      '인물화': ['남자', '여자', '아이'],
-    };
-
     return Scaffold(
       appBar: BaseAppBar(),
       body: ListView(
@@ -207,35 +294,45 @@ class TagSearchScreen extends StatelessWidget {
             children: [
               Text(
                 '# $category',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 10),
               Wrap(
                 spacing: 8.0,
                 runSpacing: 8.0,
-                children: categories[category]!.map((subcategory) {
-                  return OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.grey[200],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.0),
-                      ),
-                    ),
+                children: [
+                  ElevatedButton(
                     onPressed: () {
-                      onTagSelected(subcategory);
+                      Navigator.pop(
+                        context,
+                        Tag(category: category),
+                      );
                     },
-                    child: Text(
-                      subcategory,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black,
+                    child: Text('아무거나'),
+                  ),
+                  ...categories[category]!.map((subcategory) {
+                    return ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                          side: BorderSide(color: Theme.of(context).primaryColor),
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
+                      onPressed: () {
+                        Navigator.pop(
+                          context,
+                          Tag(category: category, subcategory: subcategory),
+                        );
+                      },
+                      child: Text(
+                        subcategory.nameKorean,
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    );
+                  }).toList(),
+                ],
               ),
               SizedBox(height: 20),
             ],
@@ -266,14 +363,14 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Future<void> _fetchImage(String description) async {
-    final apiKey = "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"; // DALL·E API KEY
+    //final API_KEY_2 // OpenAI API 키를 입력하세요
     final url = Uri.parse('https://api.openai.com/v1/images/generations');
 
     try {
       final response = await http.post(
         url,
         headers: {
-          'Authorization': 'Bearer $apiKey',
+          'Authorization': 'Bearer $API_KEY_2',
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
@@ -285,8 +382,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
-        if (data.containsKey('data') && data['data'].isNotEmpty) {
+        if (data['data'] != null && data['data'].isNotEmpty) {
           setState(() {
             imageUrl = data['data'][0]['url'];
             isLoading = false;
@@ -295,72 +391,62 @@ class _ResultScreenState extends State<ResultScreen> {
           setState(() {
             isLoading = false;
           });
+          _showError('이미지를 생성하지 못했습니다.');
         }
       } else {
         setState(() {
           isLoading = false;
         });
+        _showError('이미지를 생성하지 못했습니다.');
       }
-    } on TimeoutException catch (_) {
+    } on TimeoutException {
       setState(() {
         isLoading = false;
       });
+      _showError('요청이 시간 초과되었습니다.');
     } catch (error) {
       setState(() {
         isLoading = false;
       });
+      _showError('오류가 발생했습니다: $error');
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _downloadImage(String url) async {
     try {
       if (await _requestPermission()) {
-        var response = await Dio()
+        final response = await Dio()
             .get(url, options: Options(responseType: ResponseType.bytes));
 
-        final directory = await getExternalStorageDirectory();
-        final dcimPath = directory?.path.replaceFirst(
-            'Android/data/com.example.app/files', 'DCIM') ??
-            '/storage/emulated/0/DCIM';
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final filePath = '$dcimPath/$fileName';
-
-        await Directory(dcimPath).create(recursive: true);
-        final file = File(filePath);
-        await file.writeAsBytes(Uint8List.fromList(response.data));
-        await ImageGallerySaver.saveFile(filePath);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('이미지가 갤러리에 저장되었습니다.')),
+        final result = await ImageGallerySaver.saveImage(
+          Uint8List.fromList(response.data),
+          quality: 100,
+          name: 'generated_image_${DateTime.now().millisecondsSinceEpoch}',
         );
+
+        if (result['isSuccess']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('이미지가 갤러리에 저장되었습니다.')),
+          );
+        } else {
+          throw Exception('이미지 저장 실패');
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('이미지를 저장하기 위해 저장 권한이 필요합니다.')),
-        );
+        _showError('저장 권한이 필요합니다.');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('이미지를 저장하지 못했습니다: $e')),
-      );
+      _showError('이미지를 저장하지 못했습니다: $e');
     }
   }
 
   Future<bool> _requestPermission() async {
-    if (Platform.isAndroid) {
-      final androidInfo = await DeviceInfoPlugin().androidInfo;
-      final androidVersion = androidInfo.version.sdkInt;
-
-      if (androidVersion >= 33) {
-        final photos = await Permission.photos.request();
-        final videos = await Permission.videos.request();
-        return photos.isGranted && videos.isGranted;
-      } else {
-        final storage = await Permission.storage.request();
-        return storage.isGranted;
-      }
-    } else {
-      return true;
-    }
+    final status = await Permission.storage.request();
+    return status.isGranted;
   }
 
   @override
@@ -370,9 +456,7 @@ class _ResultScreenState extends State<ResultScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            SizedBox(height: 20),
             Expanded(
               child: Center(
                 child: isLoading
@@ -392,11 +476,7 @@ class _ResultScreenState extends State<ResultScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
                 ElevatedButton(
-                  onPressed: imageUrl != null
-                      ? () {
-                    _downloadImage(imageUrl!);
-                  }
-                      : null,
+                  onPressed: imageUrl != null ? () => _downloadImage(imageUrl!) : null,
                   child: Text('다운로드'),
                 ),
                 ElevatedButton(
