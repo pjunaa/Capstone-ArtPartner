@@ -111,7 +111,7 @@ class ApiService {
     }
   }
 
-  //1d383e0535be3bebab1394ff988fc962716cc986328c384410f0926b4495adb2 - 학과 제공
+  
   Future<String> sendImageToGPT4Vision_2({
     required File image,
     String model = "gpt-4o-2024-05-13",
