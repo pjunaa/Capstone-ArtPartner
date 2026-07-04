@@ -6,7 +6,7 @@ import '../models/youtubeVideo.dart';
 Future<List<YouTubeVideo>> searchYouTube(String query) async {
   int maxRe = 5; // 최대 검색 결과 개수
 
-  const apiKey = 'AIzaSyA8Pln_AVB_xvFc8mbD5zuPnPjJAUXTocQ'; // YouTube API 키 값
+  const apiKey = ''; // YouTube API 키 값
 
   final encodedQuery = Uri.encodeComponent(query); // 파라미터가 공백이나 특수문자를 포함할 수 있으므로 인코딩 후 진행
   String videotype = '미술 ';
