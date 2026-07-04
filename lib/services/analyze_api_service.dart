@@ -42,9 +42,7 @@ class ApiService {
                 {
                   'type': 'text',
                   'text':
-                  'Explain the techniques and artistic features used in the following painting.
-                    Leave spaces between paragraphs so that it is easy to read. Do not use numbering.
-                    You need to analyze this in detail, but please answer with 400~600 characters. Answer in Korean.'
+                  'Explain the techniques and artistic features used in the following painting. Leave spaces between paragraphs so that it is easy to read. Do not use numbering. You need to analyze this in detail, but please answer with 400~600 characters. Answer in Korean.'
                 },
                 {
                   'type': 'image_url',
